@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+const program = require('commander')
+const puppeteer = require('puppeteer')
+const glassdoor = require('../src/glassdoor.js')
+const auth = require('../src/auth.js')
+
+const defaultAuthPath = '.auth.json'
+
+const initBrowser = async (headless) => {
+  const browser = await puppeteer.launch({args: ['--no-sandbox'], headless: headless})
+  return browser
+}
+
+const searchCommand = async (cmd) => {
+  const authPath = cmd.parent.auth ? cmd.parent.auth : defaultAuthPath
+  const credentials = await auth.load(authPath)
+
+  const browser = await initBrowser(cmd.parent.headless)
+    await glassdoor.search(browser, credentials, cmd.searchString, cmd.outfile)
+  await browser.close()
+}
+
+program
+  .option('-H, --no-headless')
+  .option('--auth <filename>', `path to credentials file (default: ${defaultAuthPath})`)
+
+program.command('search')
+  .description('Search for companies')
+  .option('-s, --search-string <search-string>', 'search string')
+  .option('-o, --outfile <path>', 'path to the output file')
+  .action(cmd => {
+    if (!cmd.searchString) {
+      console.error('--search-string is required: see --help')
+      process.exit(1)
+    }
+    if (!cmd.outfile) {
+      console.error('--outfile is required: see --help')
+      process.exit(1)
+    }
+    searchCommand(cmd)
+  })
+
+// error on unknown commands
+program.on('command:*', function () {
+  console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '))
+  process.exit(1)
+})
+
+program.parse(process.argv)
+
+if (program.args.length < 1) {
+  program.help()
+}
