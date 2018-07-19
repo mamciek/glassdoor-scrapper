@@ -25,3 +25,7 @@ Create the file and fill in your username and password:
 Search for companies located in Dublin:
 
 `$ glassdoor search --search-string 'Dublin, Dublin (Ireland)' --outfile dublin-list.json`
+
+Collect ratings of companies
+
+`$ glassdoor search --infile dublin-list.json --outfile dublin-list.json`

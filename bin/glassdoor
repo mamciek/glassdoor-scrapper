@@ -17,7 +17,18 @@ const searchCommand = async (cmd) => {
   const credentials = await auth.load(authPath)
 
   const browser = await initBrowser(cmd.parent.headless)
-    await glassdoor.search(browser, credentials, cmd.searchString, cmd.outfile)
+  await glassdoor.search(browser, credentials, cmd.searchString, cmd.outfile)
+  await browser.close()
+}
+
+const ratingsCommand = async (cmd) => {
+  const authPath = cmd.parent.auth ? cmd.parent.auth : defaultAuthPath
+  const credentials = await auth.load(authPath)
+
+  const browser = await initBrowser(cmd.parent.headless)
+
+  await glassdoor.ratings(browser, credentials, cmd.infile, cmd.outfile)
+
   await browser.close()
 }
 
@@ -39,6 +50,22 @@ program.command('search')
       process.exit(1)
     }
     searchCommand(cmd)
+  })
+
+program.command('ratings')
+  .description('Collect company ratings')
+  .option('-i, --infile <path>', 'path to the input file with companies')
+  .option('-o, --outfile <path>', 'path to the output file with ratings')
+  .action(cmd => {
+    if (!cmd.infile) {
+      console.error('--infile is required. see --help')
+      process.exit(1)
+    }
+    if (!cmd.outfile) {
+      console.error('--outfile is required: see --help')
+      process.exit(1)
+    }
+    ratingsCommand(cmd)
   })
 
 // error on unknown commands
